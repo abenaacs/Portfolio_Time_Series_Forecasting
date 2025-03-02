@@ -87,3 +87,19 @@ class TimeSeriesForecaster:
             * 100
         )
         return {"MAE": mae, "RMSE": rmse, "MAPE": mape}
+
+    def forecast_future_prices(self, model_fit, steps=180):
+        """
+        Generates future price forecasts with confidence intervals.
+
+        Args:
+            model_fit: Fitted ARIMA model.
+            steps (int): Number of future steps to forecast.
+
+        Returns:
+            pd.DataFrame: Forecasted prices with confidence intervals.
+        """
+        forecast = model_fit.get_forecast(steps=steps)
+        forecast_df = forecast.conf_int()
+        forecast_df["Forecast"] = forecast.predicted_mean
+        return forecast_df
