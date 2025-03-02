@@ -48,15 +48,21 @@ def perform_eda(processed_data):
         plot_volatility_analysis(data, asset, window=30)
 
 
-def train_and_evaluate_models(processed_data):
+def train_and_evaluate_forecasting_models(processed_data):
     """
-    Trains and evaluates time series forecasting models.
+    Trains and evaluates time series forecasting models for each asset.
 
     Args:
-        processed_data (dict): Dictionary of processed data.
+        processed_data (dict): Dictionary of processed data for assets.
     """
-    forecaster = TimeSeriesForecaster(processed_data)
-    forecaster.train_and_evaluate()
+    for asset, data in processed_data.items():
+        print(f"Training ARIMA model for {asset}...")
+        forecaster = TimeSeriesForecaster(data, asset)
+        train_data, test_data = forecaster.train_test_split()
+        order = forecaster.optimize_arima(train_data)
+        model_fit = forecaster.train_arima(train_data, order)
+        metrics = forecaster.evaluate_model(model_fit, test_data)
+        print(f"{asset} Model Metrics: {metrics}")
 
 
 def optimize_portfolio_weights(processed_data):
@@ -91,7 +97,7 @@ def main():
     perform_eda(processed_data)
 
     # Step 3: Train and evaluate forecasting models
-    train_and_evaluate_models(processed_data)
+    train_and_evaluate_forecasting_models(processed_data)
 
     # Step 4: Optimize portfolio weights
     optimize_portfolio_weights(processed_data)
