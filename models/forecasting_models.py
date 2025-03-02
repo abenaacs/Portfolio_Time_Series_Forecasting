@@ -1,70 +1,89 @@
 import pandas as pd
-from statsmodels.tsa.seasonal import seasonal_decompose
-from sklearn.metrics import mean_squared_error
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from pmdarima import auto_arima
+
 
 class TimeSeriesForecaster:
-    def __init__(self, data):
+    """
+    A class for building and evaluating time series forecasting models.
+    """
+
+    def __init__(self, data, asset):
+        """
+        Initializes the forecaster with the specified asset's data.
+
+        Args:
+            data (pd.DataFrame): Preprocessed data for the asset.
+            asset (str): Name of the asset (e.g., 'TSLA').
+        """
         self.data = data
+        self.asset = asset
 
-    def train_and_evaluate(self):
-        """Train and evaluate forecasting models."""
-        for asset, data in self.data.items():
-            print(f"Training model for {asset}...")
-            # Decompose time series
-            decomposition = seasonal_decompose(data['Adj Close'], model='additive', period=30)
-            trend = decomposition.trend
-            seasonal = decomposition.seasonal
-            residual = decomposition.resid
+    def train_test_split(self, test_size=0.2):
+        """
+        Splits the data into training and testing sets.
 
-            # Train Holt-Winters Exponential Smoothing model
-            model = ExponentialSmoothing(data['Adj Close'], seasonal='add', seasonal_periods=30)
-            model_fit = model.fit()
+        Args:
+            test_size (float): Proportion of data to include in the test set.
 
-            # Forecast next 30 days
-            forecast = model_fit.forecast(steps=30)
+        Returns:
+            tuple: Training and testing datasets.
+        """
+        split_index = int(len(self.data) * (1 - test_size))
+        train_data = self.data.iloc[:split_index]
+        test_data = self.data.iloc[split_index:]
+        return train_data, test_data
 
-            # Evaluate model performance
-            actual = data['Adj Close'][-30:]
-            predicted = forecast[:30]
-            mse = mean_squared_error(actual, predicted)
-            print(f"{asset} Model MSE: {mse:.2f}")
-import pandas as pd
-from statsmodels.tsa.seasonal import seasonal_decompose
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+    def optimize_arima(self, train_data):
+        """
+        Optimizes ARIMA parameters using auto_arima.
 
-class TimeSeriesForecaster:
-    def __init__(self, data):
-        self.data = data
+        Args:
+            train_data (pd.Series): Training data for the asset.
 
-    def train_and_evaluate(self):
-        """Train and evaluate forecasting models."""
-        for asset, data in self.data.items():
-            print(f"Training model for {asset}...")
-            # Decompose time series
-            decomposition = seasonal_decompose(data['Adj Close'], model='additive', period=30)
-            trend = decomposition.trend
-            seasonal = decomposition.seasonal
-            residual = decomposition.resid
+        Returns:
+            tuple: Best (p, d, q) parameters.
+        """
+        model = auto_arima(
+            train_data["Adj Close"], seasonal=False, trace=True, stepwise=True
+        )
+        return model.order
 
-            # Train Holt-Winters Exponential Smoothing model
-            model = ExponentialSmoothing(data['Adj Close'], seasonal='add', seasonal_periods=30)
-            model_fit = model.fit()
+    def train_arima(self, train_data, order):
+        """
+        Trains an ARIMA model on the training data.
 
-            # Forecast next 30 days
-            forecast = model_fit.forecast(steps=30)
+        Args:
+            train_data (pd.Series): Training data for the asset.
+            order (tuple): (p, d, q) parameters for ARIMA.
 
-            # Evaluate model performance
-            actual = data['Adj Close'][-30:]
-            predicted = forecast[:30]
-            mse = mean_squared_error(actual, predicted)
-            mae = mean_absolute_error(actual, predicted)
-            print(f"{asset} Model MSE: {mse:.2f}, MAE: {mae:.2f}")
+        Returns:
+            ARIMA model: Fitted ARIMA model.
+        """
+        model = ARIMA(train_data["Adj Close"], order=order)
+        model_fit = model.fit()
+        return model_fit
 
-            # Save forecast results
-            forecast_df = pd.DataFrame({'Forecast': forecast})
-            forecast_df.to_csv(f'data/processed/{asset}_forecast.csv', index=False)
-            # Save forecast results
-            forecast_df = pd.DataFrame({'Forecast': forecast})
-            forecast_df.to_csv(f'data/processed/{asset}_forecast.csv', index=False)
+    def evaluate_model(self, model_fit, test_data):
+        """
+        Evaluates the ARIMA model on the test data.
+
+        Args:
+            model_fit: Fitted ARIMA model.
+            test_data (pd.Series): Testing data for the asset.
+
+        Returns:
+            dict: Evaluation metrics (MAE, RMSE, MAPE).
+        """
+        predictions = model_fit.forecast(steps=len(test_data))
+        mae = mean_absolute_error(test_data["Adj Close"], predictions)
+        rmse = np.sqrt(mean_squared_error(test_data["Adj Close"], predictions))
+        mape = (
+            np.mean(
+                np.abs((test_data["Adj Close"] - predictions) / test_data["Adj Close"])
+            )
+            * 100
+        )
+        return {"MAE": mae, "RMSE": rmse, "MAPE": mape}
