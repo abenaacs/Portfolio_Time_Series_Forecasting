@@ -30,6 +30,24 @@ def fetch_and_preprocess_data(assets, start_date, end_date):
     return processed_data
 
 
+def forecast_future_trends(processed_data):
+    """
+    Forecasts future market trends for each asset.
+
+    Args:
+        processed_data (dict): Dictionary of processed data for assets.
+    """
+    for asset, data in processed_data.items():
+        print(f"Forecasting future prices for {asset}...")
+        forecaster = TimeSeriesForecaster(data, asset)
+        train_data, _ = forecaster.train_test_split()
+        order = forecaster.optimize_arima(train_data)
+        model_fit = forecaster.train_arima(train_data, order)
+        forecast = forecaster.forecast_future_prices(model_fit, steps=180)
+        forecast.to_csv(f"data/processed/{asset}_forecast.csv", index=False)
+        print(f"Saved forecast for {asset} to data/processed/{asset}_forecast.csv")
+
+
 def perform_eda(processed_data):
     """
     Performs exploratory data analysis (EDA) on the processed data.
