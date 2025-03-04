@@ -4,7 +4,11 @@ import yfinance as yf
 from utils.data_preprocessing import DataPreprocessor
 from models.forecasting_models import TimeSeriesForecaster
 from visualizations.plots import plot_time_series, plot_volatility_analysis
-from portfolio_optimization import optimize_portfolio
+from portfolio_optimization import (
+    combine_forecasts,
+    calculate_portfolio_metrics,
+    optimize_portfolio,
+)
 
 
 def fetch_and_preprocess_data(assets, start_date, end_date):
@@ -83,20 +87,17 @@ def train_and_evaluate_forecasting_models(processed_data):
         print(f"{asset} Model Metrics: {metrics}")
 
 
-def optimize_portfolio_weights(processed_data):
+def optimize_and_analyze_portfolio(asset_forecasts):
     """
-    Optimizes portfolio weights using Efficient Frontier.
+    Optimizes and analyzes the portfolio based on forecasted data.
 
     Args:
-        processed_data (dict): Dictionary of processed data.
-
-    Returns:
-        numpy.ndarray: Optimized portfolio weights.
+        asset_forecasts (dict): Dictionary of forecasted data for assets.
     """
-    print("Optimizing Portfolio...")
-    optimized_weights = optimize_portfolio(processed_data)
-    print("Optimized Portfolio Weights:", optimized_weights)
-    return optimized_weights
+    combined_data = combine_forecasts(asset_forecasts)
+    returns, cov_matrix = calculate_portfolio_metrics(combined_data)
+    weights = optimize_portfolio(returns, cov_matrix)
+    print("Optimized Portfolio Weights:", weights)
 
 
 def main():
