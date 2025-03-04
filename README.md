@@ -1,14 +1,22 @@
-# Time Series Forecasting for Portfolio Management Optimization: Task 1
+# Time Series Forecasting for Portfolio Management Optimization
 
 ## Overview
 
-This project focuses on **Task 1** of the portfolio management optimization challenge: **Preprocessing and Exploratory Data Analysis (EDA)**. The goal is to clean, preprocess, and analyze historical financial data for three key assets:
+This project focuses on leveraging time series forecasting and portfolio optimization techniques to enhance investment strategies. It consists of four key tasks:
 
-- **TSLA**: High-growth, high-risk stock.
-- **BND**: Bond ETF providing stability and income.
-- **SPY**: S&P 500 ETF offering diversified market exposure.
+1. **Preprocessing and Exploratory Data Analysis (EDA)**: Clean, preprocess, and analyze historical financial data for three key assets:
 
-The dataset spans from **January 1, 2015, to January 31, 2025**, sourced from Yahoo Finance using the `yfinance` library. This task lays the foundation for building predictive models and optimizing portfolios in subsequent stages of the project.
+   - **TSLA**: High-growth, high-risk stock.
+   - **BND**: Bond ETF providing stability and income.
+   - **SPY**: S&P 500 ETF offering diversified market exposure.
+
+2. **Time Series Forecasting Models**: Develop predictive models (e.g., ARIMA, SARIMA, LSTM) to forecast future stock prices for TSLA, BND, and SPY.
+
+3. **Forecast Future Market Trends**: Use the trained models to predict future market trends, analyze results, and identify opportunities and risks.
+
+4. **Portfolio Optimization**: Optimize a sample portfolio based on forecasted returns to maximize returns while minimizing risks.
+
+The dataset spans from **January 1, 2015, to January 31, 2025**, sourced from Yahoo Finance using the `yfinance` library.
 
 ## Table of Contents
 
@@ -30,12 +38,16 @@ project/
 │   └── processed/    # Cleaned and preprocessed data
 │
 ├── visualizations/   # Scripts and outputs for visualizations
-│   └── plots/        # Visualization outputs (e.g., time series plots, volatility analysis)
+│   └── plots/        # Visualization outputs (e.g., time series plots, forecasts)
+│
+├── models/           # Scripts for time series forecasting models
+│   └── forecasting_models.py  # ARIMA, SARIMA, or LSTM implementation
 │
 ├── utils/            # Utility functions for data processing and analysis
 │   └── data_preprocessing.py  # Functions for fetching and preprocessing data
 │
-├── main.py           # Main script to execute Task 1
+├── portfolio_optimization.py  # Portfolio optimization logic
+├── main.py           # Main script to execute the entire pipeline
 ├── README.md         # Project documentation
 └── requirements.txt  # List of dependencies
 ```
@@ -72,21 +84,13 @@ python main.py
 
 ## Usage
 
-### Fetching Data
+### Task 1: Preprocessing and Exploratory Data Analysis (EDA)
+
+#### Fetching Data
 
 The project retrieves historical financial data for TSLA, BND, and SPY from **January 1, 2015, to January 31, 2025**, using the `yfinance` library. The raw data is saved in the `data/raw/` directory.
 
-#### Example:
-
-```python
-import yfinance as yf
-
-# Fetch data for TSLA
-data = yf.download("TSLA", start="2015-01-01", end="2025-01-31")
-print(data.head())
-```
-
-### Preprocessing
+#### Preprocessing
 
 The raw data undergoes preprocessing to ensure it is ready for analysis. Key steps include:
 
@@ -94,57 +98,77 @@ The raw data undergoes preprocessing to ensure it is ready for analysis. Key ste
 - Calculating daily returns, rolling means (30-day window), and standard deviations.
 - Saving cleaned data in the `data/processed/` directory.
 
-#### Example:
-
-```python
-# Calculate daily returns
-data['Daily_Return'] = data['Adj Close'].pct_change()
-
-# Rolling mean and standard deviation
-data['Rolling_Mean'] = data['Adj Close'].rolling(window=30).mean()
-data['Rolling_Std'] = data['Adj Close'].rolling(window=30).std()
-```
-
-### Exploratory Data Analysis (EDA)
+#### Exploratory Data Analysis (EDA)
 
 The project performs EDA to uncover insights into the data:
 
-1. **Visualizing Closing Prices**:
+1. **Visualizing Closing Prices**: Plot adjusted closing prices over time to identify trends.
+2. **Analyzing Volatility**: Compute rolling statistics (mean and standard deviation) to assess short-term trends and fluctuations.
+3. **Time Series Decomposition**: Decompose time series into trend, seasonal, and residual components using `statsmodels`.
 
-   - Plot adjusted closing prices over time to identify trends.
-   - Example: Use `plotly` for interactive visualizations.
+### Task 2: Time Series Forecasting Models
 
-2. **Analyzing Volatility**:
+#### Model Development
 
-   - Compute rolling statistics (mean and standard deviation) to assess short-term trends and fluctuations.
+The project builds time series forecasting models using:
 
-3. **Time Series Decomposition**:
-   - Decompose time series into trend, seasonal, and residual components using `statsmodels`.
+- **ARIMA (AutoRegressive Integrated Moving Average)**: Suitable for univariate time series with no seasonality.
+- **SARIMA (Seasonal ARIMA)**: Extends ARIMA by considering seasonality.
+- **LSTM (Long Short-Term Memory)**: A type of recurrent neural network (RNN) well-suited for capturing long-term dependencies.
 
-#### Example:
+#### Training and Evaluation
 
-```python
-from statsmodels.tsa.seasonal import seasonal_decompose
-import matplotlib.pyplot as plt
+- The dataset is split into training (80%) and testing (20%) sets.
+- Models are trained on the training set and evaluated on the test set using metrics like:
+  - Mean Absolute Error (MAE)
+  - Root Mean Squared Error (RMSE)
+  - Mean Absolute Percentage Error (MAPE)
 
-# Decompose time series
-decomposition = seasonal_decompose(data['Adj Close'], model='additive', period=30)
-decomposition.plot()
-plt.show()
-```
+### Task 3: Forecast Future Market Trends
+
+#### Generate Forecasts
+
+Use the trained models to forecast future stock prices for 6-12 months. The forecasts include confidence intervals to show the range within which future prices are expected to lie.
+
+#### Visualize Results
+
+Visualize the forecast alongside historical data using `plotly`. Analyze trends, volatility, and potential risks.
+
+### Task 4: Optimize Portfolio Based on Forecast
+
+#### Combine Forecasts
+
+Combine forecasts for TSLA, BND, and SPY into a single DataFrame. Compute annualized returns and covariance matrix to understand how asset returns move together.
+
+#### Portfolio Optimization
+
+Optimize portfolio weights to maximize the Sharpe Ratio, balancing risk and return. Adjust allocations based on forecasted trends and risks.
 
 ## Features
 
-### Data Preprocessing
+### Task 1: Preprocessing and EDA
 
-- **Missing Value Handling**: Missing values are addressed using forward-fill (`ffill`) and backward-fill (`bfill`) methods.
-- **Feature Engineering**: Daily returns, rolling means, and standard deviations are calculated to enrich the dataset.
+- Missing value handling using forward-fill and backward-fill.
+- Feature engineering: Daily returns, rolling means, and standard deviations.
+- Interactive visualizations with `plotly` and time series decomposition.
 
-### Exploratory Data Analysis (EDA)
+### Task 2: Time Series Forecasting
 
-- **Interactive Visualizations**: Interactive plots using `plotly` for better engagement and exploration.
-- **Volatility Analysis**: Rolling statistics provide insights into short-term trends and fluctuations.
-- **Time Series Decomposition**: Decompose time series into trend, seasonal, and residual components to understand underlying patterns.
+- ARIMA, SARIMA, or LSTM models for forecasting.
+- Evaluation metrics: MAE, RMSE, MAPE.
+- Confidence intervals for forecasts.
+
+### Task 3: Future Market Trends
+
+- Long-term trend analysis (upward, downward, stable).
+- Volatility and risk assessment.
+- Insights into market opportunities and risks.
+
+### Task 4: Portfolio Optimization
+
+- Combining forecasts for multiple assets.
+- Risk-return analysis: Sharpe Ratio, Value at Risk (VaR).
+- Optimized portfolio weights to maximize returns and minimize risks.
 
 ## Contributing
 
@@ -170,8 +194,6 @@ git push origin feature/YourFeatureName
 ```
 
 5. Open a pull request.
-
-Ensure your code adheres to the project’s coding standards and includes appropriate tests.
 
 ## License
 
